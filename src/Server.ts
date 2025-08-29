@@ -6,13 +6,13 @@ export class Server<State extends object, Actions extends object> {
 
   private constructor(
     public readonly name: string,
-    private init: ServerInit<State, Actions>
+    private config: ServerConfig<State, Actions>
   ) {}
 
   private clients: browser.Runtime.Port[] = []
   private updates: Partial<State>[] = []
 
-  public static create<State extends object, Actions extends object>(name: string, init: ServerInit<State, Actions>) {
+  public static create<State extends object, Actions extends object>(name: string, init: ServerConfig<State, Actions>) {
     const server = new Server(name, init)
     server.bind()
     return server
@@ -28,7 +28,7 @@ export class Server<State extends object, Actions extends object> {
         const message = raw as ActionMessage<string, any[]>
         console.log('<', message)
 
-        const handler = (this.init.handlers as any)[message.name]
+        const handler = (this.config.handlers as any)[message.name]
         if (!isFunction(handler)) {
           throw new Error(`Unknown action: ${message.name}`)
         }
@@ -41,17 +41,20 @@ export class Server<State extends object, Actions extends object> {
       })
 
       client.onDisconnect.addListener(() => {
-        this.init.onDisconnect?.()
+        this.config.onDisconnect?.()
       })
 
-      let state = await this.init.onConnect()
+      let state = await this.config.init()
+      // Race condition: if the client disconnects while it's initializing,
+      // we cannot continue.
+      if (!this.clients.includes(client)) { return }
+
       for (const update of this.updates) {
-        state = {
-          ...state,
-          ...update
-        }
+        state = {...state, ...update}
       }
+
       client.postMessage({type: 'INIT', state})
+      this.config.onConnect?.()
     })
   }
 
@@ -63,10 +66,17 @@ export class Server<State extends object, Actions extends object> {
     }
   }
 
+  public sendDirective(name: string, payload: any) {
+    for (const port of this.clients) {
+      port.postMessage({type: 'DIRECTIVE', name, payload})
+    }
+  }
+
 }
 
-export type ServerInit<State, Actions> = {
-  onConnect(): State | Promise<State>
+export type ServerConfig<State, Actions> = {
+  init(): State | Promise<State>
+  onConnect?(): void
   onDisconnect?(): void
   handlers: Actions
 }

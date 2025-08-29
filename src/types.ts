@@ -1,5 +1,5 @@
 import { Client } from './Client'
-import { Server, ServerInit } from './Server'
+import { Server, ServerConfig } from './Server'
 
 export interface ActionMessage<Name extends string, Args extends any[]> {
   type: 'ACTION'
@@ -17,13 +17,20 @@ export interface UpdateMessage<S> {
   update: Partial<S>
 }
 
+export interface DirectiveMessage {
+  type: 'DIRECTIVE'
+  name: string
+  payload: any
+}
+
 export type StateListener<State> = (state: State) => void
+export type DirectiveListener = (payload: any) => void
 
 export type UIPortActions = {
   [key: string]: (...args: any[]) => void
 }
 
 export type UIPort<State extends object, Actions extends object> = {
-  server: (init: ServerInit<State, Actions>) => Server<State, Actions>
+  server: (init: ServerConfig<State, Actions>) => Server<State, Actions>
   client: () => Client<State, Actions>
 }
