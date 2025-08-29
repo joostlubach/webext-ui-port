@@ -1,7 +1,7 @@
 {
-  "name": "react-timer",
+  "name": "webext-ui-port",
   "version": "0.0.1",
-  "description": "Self-disposing timer (setTimeout, setInterval, etc.) for React components",
+  "description": "A general purpose UI port (between background and e.g. popup) for use in web extensions.",
   "author": "Joost Lubach",
   "private": false,
   "license": "MIT",
@@ -18,13 +18,14 @@
     "test": "NODE_ENV=test DATA_ENV=test jest"
   },
   "peerDependencies": {
-    "react": "^19.1"
+    "wxt": "^0.20.6"
   },
   "devDependencies": {
-    "@types/react": "^19.1",
+    "@types/webextension-polyfill": "^0.12.3",
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "webextension-polyfill": "^0.12.0",
     "ytil": "workspace:^"
   }
 }
