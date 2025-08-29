@@ -1,0 +1,30 @@
+{
+  "name": "react-timer",
+  "version": "0.0.1",
+  "description": "Self-disposing timer (setTimeout, setInterval, etc.) for React components",
+  "author": "Joost Lubach",
+  "private": false,
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "check": "tsc -p . --noEmit",
+    "lint": "eslint src --ext ts,tsx",
+    "test": "NODE_ENV=test DATA_ENV=test jest"
+  },
+  "peerDependencies": {
+    "react": "^19.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "ytil": "workspace:^"
+  }
+}
