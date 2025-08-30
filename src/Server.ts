@@ -69,7 +69,7 @@ export class Server<State extends object, Actions extends object> {
     }
   }
 
-  public sendDirective(name: string, payload: any) {
+  public sendDirective(name: string, payload?: any) {
     for (const port of this.clients) {
       port.postMessage({type: 'DIRECTIVE', name, payload})
     }

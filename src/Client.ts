@@ -28,13 +28,13 @@ export class Client<State extends object, Actions extends object> {
   private listeners = new Set<StateListener<State>>()
   private directiveListeners = new Map<string, Set<DirectiveListener>>()
 
-  public actions = new Proxy({}, {
+  public actions = new Proxy({} as any, {
     get: (target, prop, receiver) => {
       if (typeof prop !== 'string') {
         throw new Error('Unknown action')
       }
 
-      return this.actionFunction(prop)
+      return target[prop] ??= this.actionFunction(prop)
     }
   }) as Actions
 
