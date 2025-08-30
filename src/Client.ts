@@ -1,3 +1,4 @@
+import Logger from 'logger'
 import browser from 'webextension-polyfill'
 import { bindMethods, MapUtil } from 'ytil'
 import {
@@ -7,6 +8,8 @@ import {
   StateListener,
   UpdateMessage,
 } from './types'
+
+const logger = new Logger('ui-port')
 
 export class Client<State extends object, Actions extends object> {
   
@@ -31,7 +34,6 @@ export class Client<State extends object, Actions extends object> {
         throw new Error('Unknown action')
       }
 
-      console.log('>', prop)
       return this.actionFunction(prop)
     }
   }) as Actions
@@ -59,13 +61,15 @@ export class Client<State extends object, Actions extends object> {
     const message = raw as InitMessage<State> | UpdateMessage<State> | DirectiveMessage
     if (message.type === 'INIT') {
       this.state = message.state
+      logger.info("State", this.state)
     } else if (message.type === 'UPDATE') {
-      console.log('<', message.update)
       this.state = {
         ...this.state as State,
         ...message.update
       }
+      logger.info("State", this.state)
     } else {
+      logger.info(`< ${message.name}`, message.payload)
       this.handleDirective(message.name, message.payload)
     }
 
@@ -101,6 +105,7 @@ export class Client<State extends object, Actions extends object> {
         throw new Error('Not connected')
       }
 
+      logger.info(`> ${name}`, args)
       this.port.postMessage({type: 'ACTION', name, args})
     }
   }

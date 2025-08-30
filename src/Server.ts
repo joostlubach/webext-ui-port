@@ -1,6 +1,9 @@
+import Logger from 'logger'
 import browser from 'webextension-polyfill'
 import { isFunction } from 'ytil'
 import { ActionMessage } from './types'
+
+const logger = new Logger('ui-port')
 
 export class Server<State extends object, Actions extends object> {
 
@@ -26,7 +29,7 @@ export class Server<State extends object, Actions extends object> {
 
       client.onMessage.addListener(raw => {
         const message = raw as ActionMessage<string, any[]>
-        console.log('<', message)
+        logger.info(`< ${message.name}`, message.args)
 
         const handler = (this.config.handlers as any)[message.name]
         if (!isFunction(handler)) {
@@ -59,7 +62,7 @@ export class Server<State extends object, Actions extends object> {
   }
 
   public updateState(update: Partial<State>) {
-    console.log('>', update)
+    logger.info('State', update)
     this.updates.push(update)
     for (const port of this.clients) {
       port.postMessage({type: 'UPDATE', update})
