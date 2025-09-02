@@ -3,8 +3,16 @@ import { Server, ServerConfig } from './Server'
 
 export interface ActionMessage<Name extends string, Args extends any[]> {
   type: 'ACTION'
+  uid: number
   name: Name
   args: Args
+}
+
+export interface ActionResultMessage {
+  type: 'ACTION_RESULT'
+  uid: number
+  result?: any
+  error?: any | null
 }
 
 export interface InitMessage<S> {

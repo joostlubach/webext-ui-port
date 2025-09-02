@@ -27,7 +27,7 @@ export class Server<State extends object, Actions extends object> {
 
       this.clients.push(client)
 
-      client.onMessage.addListener(raw => {
+      client.onMessage.addListener(async raw => {
         const message = raw as ActionMessage<string, any[]>
         logger.info(`< ${message.name}`, message.args)
 
@@ -36,7 +36,16 @@ export class Server<State extends object, Actions extends object> {
           throw new Error(`Unknown action: ${message.name}`)
         }
 
-        handler(...message.args)
+        try {
+          const result = await handler(...message.args)
+          if (this.clients.includes(client)) {
+            client.postMessage({type: 'ACTION_RESULT', uid: message.uid, result})
+          }
+        } catch (error) {
+          if (this.clients.includes(client)) {
+            client.postMessage({type: 'ACTION_RESULT', uid: message.uid, error})
+          }
+        }
       })
 
       client.onDisconnect.addListener(client => {

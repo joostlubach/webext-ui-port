@@ -1,7 +1,9 @@
 import Logger from 'logger'
 import browser from 'webextension-polyfill'
 import { bindMethods, MapUtil } from 'ytil'
+import { resolve } from '../../ytil/src/resolve'
 import {
+  ActionResultMessage,
   DirectiveListener,
   DirectiveMessage,
   InitMessage,
@@ -58,7 +60,7 @@ export class Client<State extends object, Actions extends object> {
   }
 
   private messageListener = (raw: unknown) => {
-    const message = raw as InitMessage<State> | UpdateMessage<State> | DirectiveMessage
+    const message = raw as InitMessage<State> | UpdateMessage<State> | ActionResultMessage | DirectiveMessage
     if (message.type === 'INIT') {
       this.state = message.state
       logger.info("State", this.state)
@@ -68,6 +70,16 @@ export class Client<State extends object, Actions extends object> {
         ...message.update
       }
       logger.info("State", this.state)
+    } else if (message.type === 'ACTION_RESULT') {
+      const {uid, result, error} = message
+      const [resolve, reject] = this.pending.get(uid) ?? []
+      this.pending.delete(uid)
+
+      if (error != null) {
+        reject?.(error)
+      } else {
+        resolve?.(result)
+      }
     } else {
       logger.info(`< ${message.name}`, message.payload)
       this.handleDirective(message.name, message.payload)
@@ -99,15 +111,26 @@ export class Client<State extends object, Actions extends object> {
     }
   }
 
+  private pending = new Map<number, ResolveReject<any>>()
+
   private actionFunction(name: string) {
-    return (...args: any[]) => {
-      if (this.port == null) {
+    return async (...args: any[]) => {
+      const {port} = this
+      if (port == null) {
         throw new Error('Not connected')
       }
 
       logger.info(`> ${name}`, args)
-      this.port.postMessage({type: 'ACTION', name, args})
+
+      const uid = pendingUID++
+      return new Promise<any>((resolve, reject) => {
+        this.pending.set(uid, [resolve, reject])
+        port.postMessage({type: 'ACTION', uid, name, args})
+      })
     }
   }
 
 }
+
+let pendingUID = 0
+type ResolveReject<T> = [(result: T) => void, (cause: any) => void]
