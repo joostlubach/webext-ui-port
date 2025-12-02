@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
+    "target": "ES2022",
     "outDir": "dist",
     "declaration": true,
     "sourceMap": true,
